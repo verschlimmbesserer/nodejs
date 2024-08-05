@@ -1,0 +1,26 @@
+---
+
+- name: Download nodejs repo setup script
+  ansible.builtin.get_url:
+    url: "{{ nodejs_setup_url }}"
+    dest: "/var/tmp/{{ nodejs_setup_url | basename }}.sh"
+    mode: 0774
+    owner: root
+    group: root
+  register: nodejs_setup
+
+- name: Install nodejs repo
+  ansible.builtin.shell:
+    cmd: "/var/tmp/{{ nodejs_setup_url | basename }}.sh"
+    executable: /bin/bash
+  register: nodejs_repo
+  changed_when: nodejs_repo.rc != 0
+  when: nodejs_setup is changed
+
+- name: "Install nodejs and npm"
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  loop: "{{ nodejs_packages }}"
